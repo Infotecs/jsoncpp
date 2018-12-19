@@ -1,4 +1,4 @@
-// Copyright 2007-2010 Baptiste Lepilleur
+// Copyright 2007-2010 Baptiste Lepilleur and The JsonCpp Authors
 // Distributed under MIT license, or public domain if desired and
 // recognized in your jurisdiction.
 // See file LICENSE for detail or copy at http://jsoncpp.sourceforge.net/LICENSE
@@ -93,8 +93,8 @@ TestResult::addFailure(const char* file, unsigned int line, const char* expr) {
     if (lastNode->id_ > lastUsedPredicateId_) // new PredicateContext
     {
       lastUsedPredicateId_ = lastNode->id_;
-      addFailureInfo(
-          lastNode->file_, lastNode->line_, lastNode->expr_, nestingLevel);
+      addFailureInfo(lastNode->file_, lastNode->line_, lastNode->expr_,
+                     nestingLevel);
       // Link the PredicateContext to the failure for message target when
       // popping the PredicateContext.
       lastNode->failure_ = &(failures_.back());
@@ -140,16 +140,6 @@ TestResult& TestResult::popPredicateContext() {
 
 bool TestResult::failed() const { return !failures_.empty(); }
 
-unsigned int TestResult::getAssertionNestingLevel() const {
-  unsigned int level = 0;
-  const PredicateContext* lastNode = &rootPredicateNode_;
-  while (lastNode->next_ != 0) {
-    lastNode = lastNode->next_;
-    ++level;
-  }
-  return level;
-}
-
 void TestResult::printFailure(bool printTestName) const {
   if (failures_.empty()) {
     return;
@@ -165,7 +155,7 @@ void TestResult::printFailure(bool printTestName) const {
     const Failure& failure = *it;
     JSONCPP_STRING indent(failure.nestingLevel_ * 2, ' ');
     if (failure.file_) {
-      printf("%s%s(%d): ", indent.c_str(), failure.file_, failure.line_);
+      printf("%s%s(%u): ", indent.c_str(), failure.file_, failure.line_);
     }
     if (!failure.expr_.empty()) {
       printf("%s\n", failure.expr_.c_str());
@@ -180,7 +170,7 @@ void TestResult::printFailure(bool printTestName) const {
 }
 
 JSONCPP_STRING TestResult::indentText(const JSONCPP_STRING& text,
-                                   const JSONCPP_STRING& indent) {
+                                      const JSONCPP_STRING& indent) {
   JSONCPP_STRING reindented;
   JSONCPP_STRING::size_type lastIndex = 0;
   while (lastIndex < text.size()) {
@@ -257,8 +247,7 @@ void Runner::runTestAt(unsigned int index, TestResult& result) const {
 #endif // if JSON_USE_EXCEPTION
     test->run(result);
 #if JSON_USE_EXCEPTION
-  }
-  catch (const std::exception& e) {
+  } catch (const std::exception& e) {
     result.addFailure(__FILE__, __LINE__, "Unexpected exception caught:")
         << e.what();
   }
@@ -282,7 +271,7 @@ bool Runner::runAllTest(bool printSummary) const {
 
   if (failures.empty()) {
     if (printSummary) {
-      printf("All %d tests passed\n", count);
+      printf("All %u tests passed\n", count);
     }
     return true;
   } else {
@@ -294,9 +283,7 @@ bool Runner::runAllTest(bool printSummary) const {
     if (printSummary) {
       unsigned int failedCount = static_cast<unsigned int>(failures.size());
       unsigned int passedCount = count - failedCount;
-      printf("%d/%d tests passed (%d failure(s))\n",
-             passedCount,
-             count,
+      printf("%u/%u tests passed (%u failure(s))\n", passedCount, count,
              failedCount);
     }
     return false;
@@ -398,8 +385,8 @@ void Runner::preventDialogOnCrash() {
   _CrtSetReportHook(&msvcrtSilentReportHook);
 #endif // if defined(_MSC_VER)
 
-// @todo investiguate this handler (for buffer overflow)
-// _set_security_error_handler
+  // @todo investigate this handler (for buffer overflow)
+  // _set_security_error_handler
 
 #if defined(_WIN32)
   // Prevents the system from popping a dialog for debugging if the
@@ -430,9 +417,7 @@ JSONCPP_STRING ToJsonString(const char* toConvert) {
   return JSONCPP_STRING(toConvert);
 }
 
-JSONCPP_STRING ToJsonString(JSONCPP_STRING in) {
-  return in;
-}
+JSONCPP_STRING ToJsonString(JSONCPP_STRING in) { return in; }
 
 #if JSONCPP_USING_SECURE_MEMORY
 JSONCPP_STRING ToJsonString(std::string in) {
